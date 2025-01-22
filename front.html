@@ -1,0 +1,145 @@
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+<div class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+  <h1 class="text-4xl font-bold mb-6 text-gray-900">Mental Health Analysis App</h1>
+
+  <div class="bg-white shadow-md rounded-lg p-6 w-full max-w-md mb-6">
+    <h2 class="text-2xl font-semibold mb-4 text-gray-800">Enter Your Thoughts</h2>
+    <textarea id="textInput" class="w-full p-2 border border-gray-300 rounded-lg mb-4" rows="4" placeholder="Tell me about your problems..."></textarea>
+    <div class="flex space-x-4">
+      <button id="analyzeButton" class="py-2 px-4 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600">Analyze</button>
+      <button id="startRecordingButton" class="py-2 px-4 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600">Start Recording</button>
+    </div>
+    <div id="results" class="mt-4"></div>
+  </div>
+
+  <div class="bg-white shadow-md rounded-lg p-6 w-full max-w-md">
+    <h2 class="text-2xl font-semibold mb-4 text-gray-800">Psychological Evaluation</h2>
+    <form id="evaluationForm">
+      <div class="mb-4">
+        <label class="block text-gray-600" for="stress">1. On a scale of 1 to 5, how often do you feel stressed in a day?</label>
+        <input type="number" id="stress" class="w-full p-2 border border-gray-300 rounded-lg" min="1" max="5" required>
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-600" for="sleep">2. On a scale of 1 to 5, how well do you sleep at night?</label>
+        <input type="number" id="sleep" class="w-full p-2 border border-gray-300 rounded-lg" min="1" max="5" required>
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-600" for="motivation">3. On a scale of 1 to 5, how often do you feel motivated to accomplish your daily goals?</label>
+        <input type="number" id="motivation" class="w-full p-2 border border-gray-300 rounded-lg" min="1" max="5" required>
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-600" for="overwhelmed">4. On a scale of 1 to 5, how often do you feel overwhelmed by responsibilities?</label>
+        <input type="number" id="overwhelmed" class="w-full p-2 border border-gray-300 rounded-lg" min="1" max="5" required>
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-600" for="content">5. On a scale of 1 to 5, how often do you feel content with your life?</label>
+        <input type="number" id="content" class="w-full p-2 border border-gray-300 rounded-lg" min="1" max="5" required>
+      </div>
+      <button type="submit" class="py-2 px-4 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600">Submit Evaluation</button>
+    </form>
+    <div id="evaluationResults" class="mt-4"></div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('analyzeButton').addEventListener('click', function() {
+      const text = document.getElementById('textInput').value;
+      
+      if (!text.trim()) {
+          document.getElementById('results').innerHTML = "<p class='text-red-500'>Please enter your thoughts before analyzing.</p>";
+          return;
+      }
+
+      const results = analyzeMentalHealth(text);
+      displayResults(results);
+  });
+
+  document.getElementById('startRecordingButton').addEventListener('click', function() {
+      startRecording();
+  });
+
+  function startRecording() {
+      navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+          .then(function(stream) {
+              const mediaRecorder = new MediaRecorder(stream);
+              let audioChunks = [];
+
+              mediaRecorder.ondataavailable = function(event) {
+                  audioChunks.push(event.data);
+              };
+
+              mediaRecorder.onstop = function() {
+                  const audioBlob = new Blob(audioChunks);
+                  const audioUrl = URL.createObjectURL(audioBlob);
+                  const audio = new Audio(audioUrl);
+                  audio.play();
+
+                  const textArea = document.getElementById('textInput');
+                  textArea.value += " Recorded audio. "; // Placeholder for actual transcription functionality
+              };
+
+              mediaRecorder.start();
+
+              setTimeout(function() {
+                  mediaRecorder.stop();
+              }, 5000); // Stops recording after 5 seconds
+          })
+          .catch(function(err) {
+              console.error("Error accessing microphone and camera: ", err);
+              alert("Could not access your microphone and camera.");
+          });
+  }
+
+  function displayResults(results) {
+      const resultDiv = document.getElementById('results');
+      resultDiv.innerHTML = `
+          <h3 class="text-xl font-semibold text-gray-700">Analysis Results:</h3>
+          <p><strong>Sentiment Score:</strong> ${JSON.stringify(results['Sentiment Score'])}</p>
+          <p><strong>Detected Keywords:</strong> ${results['Detected Keywords'].join(', ')}</p>
+          <p><strong>Mental Health Status:</strong> ${results['Mental Health Status']}</p>
+          <p><strong>Suggested Solutions:</strong> ${results['Solutions'].join('; ')}</p>
+      `;
+  }
+
+  document.getElementById('evaluationForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const stress = parseInt(document.getElementById('stress').value);
+      const sleep = parseInt(document.getElementById('sleep').value);
+      const motivation = parseInt(document.getElementById('motivation').value);
+      const overwhelmed = parseInt(document.getElementById('overwhelmed').value);
+      const content = parseInt(document.getElementById('content').value);
+
+      const responses = {
+          "Stress Level": stress > 3 ? "High" : "Low",
+          "Sleep Quality": sleep > 3 ? "Good" : "Poor",
+          "Motivation Level": motivation > 3 ? "High" : "Low",
+          "Overwhelmed Level": overwhelmed > 3 ? "High" : "Low",
+          "Content Level": content > 3 ? "High" : "Low"
+      };
+
+      displayEvaluationResults(responses);
+  });
+
+  function displayEvaluationResults(responses) {
+      const evalResultDiv = document.getElementById('evaluationResults');
+      evalResultDiv.innerHTML = `
+          <h3 class="text-xl font-semibold text-gray-700">Evaluation Results:</h3>
+          <p><strong>Stress Level:</strong> ${responses["Stress Level"]}</p>
+          <p><strong>Sleep Quality:</strong> ${responses["Sleep Quality"]}</p>
+          <p><strong>Motivation Level:</strong> ${responses["Motivation Level"]}</p>
+          <p><strong>Overwhelmed Level:</strong> ${responses["Overwhelmed Level"]}</p>
+          <p><strong>Content Level:</strong> ${responses["Content Level"]}</p>
+      `;
+  }
+
+  function analyzeMentalHealth(text) {
+      return {
+          'Sentiment Score': { 'compound': -0.5 },
+          'Detected Keywords': ['depression', 'stress'],
+          'Mental Health Status': 'Potential Mental Health Concern',
+          'Solutions': ['Consider reaching out to a mental health professional and maintaining a daily journal to track your emotions.', 'Try managing your time effectively, prioritize tasks.']
+      };
+  }
+</script>
