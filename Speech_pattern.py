@@ -19,6 +19,23 @@ def extract_features(file_path):
         return None
 
 
+
+def predict_speech_tone(audio_path):
+    feature = extract_features(audio_path)
+    if feature is not None:
+        prediction = model.predict([feature])
+        if prediction[0] == 0:
+            return "Neutral"
+        elif prediction[0] == 1:
+            return "Happy"
+        elif prediction[0] == 2:
+            return "Sad"
+        # Add more tone labels as needed
+    else:
+        return "Error in processing audio file."
+
+result = predict_speech_tone('audio4.wav')
+print("Predicted Speech Tone:", result)
 def load_data(file_path, labels):
     features = []
     valid_labels = []
