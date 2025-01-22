@@ -1,1 +1,1 @@
-This Particular file contain all the features that are used and builded for our final project.
+In this repository, I have developed a mental health analysis program using Python. This version does not incorporate a machine learning model
